@@ -53,8 +53,8 @@ def add_vars_to_workspace(_ws=None,_data=None,_stxsVar=None):
   for var in _data.columns:
     if var in ['type','cat',_stxsVar]: continue
     if var == "CMS_hgg_mass": 
-      _vars[var] = ROOT.RooRealVar(var,var,125.,100.,180.)
-      _vars[var].setBins(160)
+      _vars[var] = ROOT.RooRealVar(var,var,100.,100.,180.)
+      _vars[var].setBins(80000)
     elif var == "dZ": 
       _vars[var] = ROOT.RooRealVar(var,var,0.,-20.,20.)
       _vars[var].setBins(40)
@@ -108,7 +108,7 @@ theoryWeightColumns = {}
 for ts, nWeights in theoryWeightContainers.iteritems(): theoryWeightColumns[ts] = ["%s_%g"%(ts[:-1],i) for i in range(0,nWeights)] # drop final s from container name
 
 # If year == 2018, add HET
-if opt.year == '2018': systematics.append("JetHEM")
+#if opt.year == '2018': systematics.append("JetHEM")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

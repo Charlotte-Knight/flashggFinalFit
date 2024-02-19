@@ -5,14 +5,12 @@ set -x
 
 #trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/outputTrees
 #trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/outputTrees
-#trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_tautau/outputTrees
-trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_High_Mass/outputTrees
+#trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/NMSSM_Y_tautau/outputTrees
+#trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_High_Mass/outputTrees
 #trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/outputTrees
 #trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/NMSSM_Y_gg_Low_Mass_HLT/outputTrees
 
-#trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/LimitVsMinNum/10/outputTrees
-#trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/MC_Fit_Final_AdjError/outputTrees
-
+trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_High_Mass/LimitVsMinNum/20/outputTrees
 
 pushd $trees
  rm -r 2016/*/

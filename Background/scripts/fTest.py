@@ -91,6 +91,7 @@ print(blindingRegion)
 # CONSTRUCT MODEL
 nBinsOutput = inputWS.var("CMS_hgg_mass").getBins()
 nBins = int(nBinsOutput/4) #set as 1GeV intervals assuming it is originally 0.25 GeV intervals (see trees2ws_data.py)
+#nBins = int(nBinsOutput/20) #set as 5GeV intervals assuming it is originally 0.25 GeV intervals (see trees2ws_data.py)
 print(nBinsOutput, nBins)
 
 if xvar.getMax() > 180: # if high mass

@@ -80,10 +80,10 @@ def getToFitMY(step_sf, m, masses):
     if sum((trial_mxs > min_mx) & (trial_mxs < max_mx)).sum() > 0:
       mys_to_keep.append(trial_my)
 
-    print(trial_my)
-    print(trial_mxs)
-    print(min_mx, max_mx)
-    print(mys_to_keep)
+    # print(trial_my)
+    # print(trial_mxs)
+    # print(min_mx, max_mx)
+    # print(mys_to_keep)
 
   #print(mys_to_keep)
   mys = sorted(mys_to_keep)

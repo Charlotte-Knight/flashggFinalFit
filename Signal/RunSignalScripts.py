@@ -27,7 +27,7 @@ def get_options():
 print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING SIGNAL SCRIPTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 def leave():
   print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING SIGNAL SCRIPTS (END) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  sys.exit(1)
+  sys.exit(0)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Extract options from config file:
@@ -85,10 +85,14 @@ if options['mode'] not in ['fTest','getEffAcc','getDiagProc','calcPhotonSyst','s
   print " --> [ERROR] mode %s not allowed. Please use one of the following: ['fTest','getEffAcc','getDiagProc','calcPhotonSyst','signalFit']. Leaving..."%options['mode']
   leave()
 
+print("boo")
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Extract list of filenames
 WSFileNames = extractWSFileNames(options['inputWSDir'])
 if not WSFileNames: leave()
+
+print("boo")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If proc/cat == auto. Extract processes and categories

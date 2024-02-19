@@ -16,6 +16,10 @@ source setup.sh
 # sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/Interpolation
 # res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/ResonantBkg
 
+trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/outputTrees
+sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/Interpolation
+res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/ResonantBkg
+
 # trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/outputTrees
 # sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/Interpolation
 # res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/ResonantBkg
@@ -24,9 +28,12 @@ source setup.sh
 # sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_High_Mass/Interpolation
 # res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_High_Mass/ResonantBkg
 
-trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/outputTrees
-sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/Interpolation
-res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/ResonantBkg
+# trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/outputTrees
+# sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/Interpolation
+# res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/ResonantBkg
+# trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/ABCD_check/outputTrees_right_all
+# sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/Interpolation
+# res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/ResonantBkg
 #dy_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/RelicDYEstimation
 
 sig_years="2016 2017 2018"
@@ -49,26 +56,38 @@ get_my() {
   echo $1 | cut -d'y' -f2
 }
 
-#graviton, radion, Y->tautau settings
-# mggl=100
-# mggh=180
-# plot_blinding_region="115,135"
-# get_mh() {
-#   echo 125
+# graviton, radion, Y->tautau settings
+mggl=100
+mggh=180
+plot_blinding_region="115,135"
+get_mh() {
+  echo 125.38
+}
+lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':59.83, 'combined':137.65, 'merged':137.65}"
+
+# #low mass Y->gg settings
+# mggl=65
+# mggh=150
+# plot_blinding_region="68,135"
+# get_mh () {
+#   echo $(get_my $1)
 # }
-# lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':59.83, 'combined':137.65, 'merged':137.65}"
+# do_scan=1
+# step_sf=1
+# lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':54.67, 'combined':132.46, 'merged':132.46}"
+# do_dy_bkg=1
 
 #low mass Y->gg settings
-mggl=65
-mggh=150
-plot_blinding_region="68,135"
-get_mh () {
-  echo $(get_my $1)
-}
-do_scan=1
-step_sf=1
-lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':54.67, 'combined':132.46, 'merged':132.46}"
-do_dy_bkg=1
+# mggl=65
+# mggh=150
+# plot_blinding_region="70,135"
+# get_mh () {
+#   echo $(get_my $1)
+# }
+# do_scan=1
+# step_sf=1
+# lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':54.67, 'combined':132.46, 'merged':132.46}"
+# do_dy_bkg=1
 
 #high mass Y->gg settings
 # mggl=100
@@ -126,9 +145,9 @@ pushd Background
       if (( $mh < 83 )); then
         low_bound=68 #low mass exception
       else
-        low_bound=$(expr ${mh} - $((1250/${mh})) )
+        low_bound=$(expr ${mh} - $((10*${mh}/125)) )
       fi      
-      high_bound=$(expr ${mh} + $((1250/${mh})) )
+      high_bound=$(expr ${mh} + $((10*${mh}/125)) )
       python RunBackgroundScripts_lite.py --inputConfig config_ggtt_batch_${year}_${m}.py --mode fTest --modeOpts "--blindingRegion ${low_bound},${high_bound} --plotBlindingRegion ${plot_blinding_region} --gofCriteria 0.01" > /dev/null &
       sleep 0.5
     done
@@ -213,26 +232,28 @@ pushd Combine
  mkdir -p Models
  mkdir -p Models/signal
  mkdir -p Models/res_bkg
- #mkdir -p Models/dy_bkg
  mkdir -p Models/background
  cp ../SignalModelInterpolation/outdir/* ./Models/signal/
  cp ../SignalModelInterpolation/res_bkg_outdir/* ./Models/res_bkg/
-#  if [[ -n $do_dy_bkg ]]; then 
-#     cp ../SignalModelInterpolation/dy_bkg_outdir/* ./Models/dy_bkg/
-#  fi
  set +e
  cp ../Background/outdir_ggtt_resonant_*/fTest/output/CMS-HGG*.root ./Models/background/
  set -e
  cp ../Datacard/Datacard_ggtt_resonant*.txt .
 
  for m in $masses ; do
-  #./get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
-  #echo "fake"
+  #../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
   qsub -q hep.q -l h_rt=3600 ../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
-  #qsub -q hep.q -l h_rt=7200 -pe hep.pe 16 ../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
  done
 
  wait_batch get_limit_workspace
+
+ if [[ "$trees" == *"Y_gg"* ]]; then
+  echo "Is Y->gg"
+  is_Y_gg=1
+ else
+  echo "Is not Y->gg"
+  is_Y_gg=0
+ fi
 
  for m in $masses ; do
   if [[ -n $do_scan ]]; then 
@@ -241,21 +262,29 @@ pushd Combine
   else
     mh_to_scan=$(get_mh $m)
   fi
+  echo $m
+  echo $mh_to_scan
 
   for mh_scan in $mh_to_scan ; do
-    echo $mh_scan
-    #../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan
-    qsub -q hep.q -l h_rt=7200 ../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan
-    #qsub -q hep.q -l h_rt=1800 -pe hep.pe 8 ../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan
+    echo $(get_mx $m) $(get_my $m) $mh_scan
+    if [[ -n $(python should_do_impacts.py $(get_mx $m) $(get_my $m) $mh_scan $is_Y_gg ) ]]; then
+      echo "Doing impacts"
+      do_impacts=1
+    else
+      do_impacts=0
+    fi
+    
+    #../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan $do_impacts
+    qsub -q hep.q -l h_rt=7200 ../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan $do_impacts
   done
- done
+done
 
  wait_batch get_limit_combine
 
+ set +e
  grep 'r <' combine_results_ggtt_resonant_*.txt > combine_results_summary.txt
+ grep 'Significance:' combine_results_ggtt_resonant_*.txt >> combine_results_summary.txt
 popd
-
-set +e
 
 mkdir -p Outputs/CollectedPlots
 cp -r Background/plots Outputs/CollectedPlots/Background/

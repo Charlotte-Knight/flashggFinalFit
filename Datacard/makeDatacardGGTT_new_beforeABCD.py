@@ -54,54 +54,44 @@ def attemptLoadSystematics(json_location):
   else:
     return None
 
-def getValFromDict(sys_dict, sys_name):
-  possible_sys = sys_dict.keys()
-  if sys_name in possible_sys:
-    val = [sys_dict[sys_name], sys_dict[sys_name]]
-  else:
-    val = [sys_dict[sys_name+"_left"], sys_dict[sys_name+"_right"]]
-  return val
-
 def findFactorySystematic(sys_name, proc, cat, year, sig_systematics, res_bkg_systematics, args):
   if "ggtt" in proc:
     if sig_systematics != None:
-      sys_dict = sig_systematics[str(year)][str(cat[-1])]["%d_%d"%(args.MX, args.MY)]
-      val = getValFromDict(sys_dict, sys_name)
+      val = sig_systematics[str(year)][str(cat[-1])]["%d_%d"%(args.MX, args.MY)][sys_name]
     else:
-      val = [1,1]
+      val = 1
   else:
     if (res_bkg_systematics != None) and ("Interpolation" not in sys_name):
       slimmed_proc = "_".join(proc.split("_")[:-2]) #take away the year_hgg suffix
-      sys_dict = res_bkg_systematics[str(year)][str(cat[-1])]["%d_%d"%(args.MX, args.MY)][slimmed_proc]
-      val = getValFromDict(sys_dict, sys_name)        
+      val = res_bkg_systematics[str(year)][str(cat[-1])]["%d_%d"%(args.MX, args.MY)][slimmed_proc][sys_name]
     else:
-      val = [1,1]
+      val = 1
 
-  val = ["%.4f"%val[0], "%.4f"%val[1]]
-  if val[0] == val[1] == "1.0000":
-    val = "-"
-  elif abs(float(val[0]) - 1) == abs(float(val[1]) - 1):
-    val = val[0]
+  if val == 1:
+    return '-'
   else:
-    val = "%s/%s"%(val[0], val[1])
-
-  return val
+    val = "%.4f"%val
+    if val == "1.0000":
+      return '-'
+    else:
+      return val
 
 def addMigrationSystematics(df):
   """Add interpolation migration systematics to list of systematics"""
   template = {'name':'','title':'','type':'factory','prior':'lnN','correlateAcrossYears':0}
 
-  nCats = len([cat for cat in df.cat.unique() if "cr" not in cat])
-  for i in range(nCats-1):    
-    template_copy = copy.deepcopy(template)
-    template_copy["name"] = template_copy["title"] = "Interpolation_migration_%d_%d"%(i, i+1)
-    systematics_ggtt.experimental_systematics.append(template_copy)
+  nCats = len(df.cat.unique())
+  for i in range(nCats-1):
+    for direction in ["left", "right"]:
+      template_copy = copy.deepcopy(template)
+      template_copy["name"] = template_copy["title"] = "Interpolation_migration_%d_%d_%s"%(i, i+1, direction)
+      systematics_ggtt.experimental_systematics.append(template_copy)
 
 def grabSystematics(df, args):
   sig_systematics = attemptLoadSystematics(args.sig_syst)
   res_bkg_systematics = attemptLoadSystematics(args.res_bkg_syst)
 
-  addMigrationSystematics(df)
+  #addMigrationSystematics(df)
 
   years = df.year.unique()
 
@@ -117,7 +107,7 @@ def grabSystematics(df, args):
     for idx, row in df.iterrows():
       proc, cat, year = row[["proc", "cat", "year"]]
       #print(proc)
-      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
+      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg"):
         val = '-'
       elif syst["type"] == "factory":
         val = findFactorySystematic(syst["name"], proc, cat, year, sig_systematics, res_bkg_systematics, args)
@@ -133,14 +123,10 @@ def grabSystematics(df, args):
 
     for idx, row in df.iterrows():
       proc, cat, year = row[["proc", "cat", "year"]]
-      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc) or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
+      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc):
         val = '-'
       elif syst["type"] == "constant":
-        nc = {"ggH":"ggH", "qqH":"VBF", "VH":"VH", "ttH":"ttH"} # name conversion
-        if (syst["name"] == "BR_hgg") or (nc[syst["name"].split("_")[-1]] in proc):
-          val = syst["value"]
-        else:
-          val = '-'
+        val = syst["value"]
       else:
         raise Exception()
 
@@ -163,7 +149,6 @@ def getNorm(current_modelWSFile, model, args):
   #print("%s_norm"%model.split(":")[1])
 
   norm = w.function("%s_norm"%model.split(":")[1]).getVal()
-  f.Close()
   return norm
 
 def getBackgroundYield(f, cat, my):
@@ -192,13 +177,9 @@ def getBackgroundYield(f, cat, my):
   bkg_yields = []
   for i in range(10):
     w.cat("pdfindex_%s_combined_13TeV"%cat).setIndex(i)
-    prodVal = prod.getVal()
-    if prodVal == 0:
-      prodVal = (mggh-mggl) / (xvar.getMax()-xvar.getMin())
-    bkg_yields.append(prodVal)
+    bkg_yields.append(prod.getVal())
   print(bkg_yields)
   
-  f.Close()
   return max(bkg_yields)
   #return prod.getVal()
 
@@ -206,7 +187,7 @@ def grabYields(df, args):
   df["sig_yield"] = 0
   df["bkg_yield"] = 0
   for idx, row in df.iterrows():
-    if (row.proc == "bkg_mass") or (row.proc == "data_obs") or (row.proc == "dy_merged_hgg") or (row.proc == "dy_falling"):
+    if (row.proc == "bkg_mass") or (row.proc == "data_obs"):
       #norm = np.inf #ensure does not get pruned
       norm = 0
     else:
@@ -217,7 +198,7 @@ def grabYields(df, args):
       sf = 1. / 1000.
     df.loc[idx, "sig_yield"] = norm * sf * row.rate
 
-    if ("ggtt" in row.proc) and (row.year == "2016"): # only need bkg yield in one row (choose 2016)
+    if ("ggtt" in row.proc) and (row.year == "2016"):
       bkg_workspace_file = "../Background/outdir_ggtt_resonant_combined_mx%dmy%d/fTest/output/CMS-HGG_multipdf_%s_combined.root"%(args.MX, args.MY, row["cat"])
       df.loc[idx, "bkg_yield"] = getBackgroundYield(bkg_workspace_file, row["cat"], args.MY)
 
@@ -243,7 +224,6 @@ def doPruning(df, args):
     for proc in df.proc.unique():
       if "ggtt" in proc:
         df_cat_proc = df[(df.cat==cat)&(df.proc==proc)]
-        print(df_cat_proc)
         assert len(df_cat_proc) == 1
         sig_cat_yields[cat] += df_cat_proc.iloc[0]["sig_yield"]
         bkg_cat_yields[cat] += df_cat_proc.iloc[0]["bkg_yield"]
@@ -261,17 +241,13 @@ def doPruning(df, args):
     if df[df.cat==cat].iloc[0]["prune"] == 1:
       continue
 
-    #tot_yield = df[df.cat==cat]["sig_yield"].sum()
-    tot_yield = sum([row["sig_yield"] for i, row in df[df.cat==cat].iterrows() if "ggtt" in row.proc])
-    print("Total ggtt yield at xs=1fb: %.2f"%tot_yield)
-
+    tot_yield = df[df.cat==cat]["sig_yield"].sum()
     for proc in df[df.cat==cat].proc.unique():
       df_cat_proc = df[(df.cat==cat)&(df.proc==proc)]
       #print(df_cat_proc)
       assert len(df_cat_proc) == 1
-      #if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (df_cat_proc.iloc[0]["sig_yield"] < 0.1*args.pruneThreshold*tot_yield):
-      if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (proc != "dy_falling") & (df_cat_proc.iloc[0]["sig_yield"] < 0.01):
-        print("Pruning %s from %s, yield = %.2f"%(proc,cat,df_cat_proc.iloc[0]["sig_yield"]))
+      if (proc != "bkg_mass") & (proc != "data_obs") & (df_cat_proc.iloc[0]["sig_yield"] < 0.1*args.pruneThreshold*tot_yield):
+        print("Pruning %s from %s"%(proc,cat))
         df.loc[(df.cat==cat)&(df.proc==proc), "prune"] = 1
 
   return df
@@ -310,16 +286,6 @@ def createDYSystematics(df):
     ])
   return systematics
 
-def getNEvents(modelWSFile, current_modelWSFile):
-  f = ROOT.TFile(modelWSFile,"read")
-  f.Print()
-  w = f.Get(current_modelWSFile.split(":")[0])
-  f.Print()
-  datahist = w.data(current_modelWSFile.split(":")[1])
-  nevents = datahist.sumEntries()
-  f.Close()
-  return nevents
-
 def main(args):
   columns = ["proc", "cat", "year", "rate", "modelWSFile", "current_modelWSFile", "model", "prune"]
   rows = []
@@ -331,10 +297,10 @@ def main(args):
     for fname, model, proc, cat, year in getProcesses(args.res_bkg_model_dir, args):
       rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/res_bkg", fname), os.path.join(args.res_bkg_model_dir, fname), model, 0])
 
-  # if args.do_dy_bkg:
-  #   for fname, model, proc, cat, year in getProcesses(args.dy_bkg_model_dir, args):
-  #     rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/dy_bkg", fname), os.path.join(args.dy_bkg_model_dir, fname), model, 0])
-  #     print(model)
+  if args.do_dy_bkg:
+    for fname, model, proc, cat, year in getProcesses(args.dy_bkg_model_dir, args):
+      rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/dy_bkg", fname), os.path.join(args.dy_bkg_model_dir, fname), model, 0])
+      print(model)
 
   df = pd.DataFrame(rows, columns=columns)
 
@@ -342,51 +308,12 @@ def main(args):
   for cat in df.cat.unique():
     new_rows.append(["bkg_mass", cat, "merged", 1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:CMS_hgg_%s_combined_13TeV_bkgshape"%cat, 0])
     new_rows.append(["data_obs", cat, "merged", -1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:roohist_data_mass_%s"%cat, 0])
-  
-    if args.doABCD:
-      #new_rows.append(["bkg_mass", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_bkgshape"%(cat+"cr"), 0])
-      new_rows.append(["dy_falling", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
-      new_rows.append(["data_obs", cat+"cr", "merged", -1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:roohist_data_mass_%s"%(cat+"cr"), 0])
-      catnum = int(cat.split("cat")[1].split("cr")[0])
-      new_rows.append(["dy_merged_hgg", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
-      new_rows.append(["dy_merged_hgg", cat, "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
-
-      new_rows.append(["dy_falling", cat, "merged", 0.018, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
-
-
   df = pd.concat([df, pd.DataFrame(new_rows, columns=columns)], ignore_index=True)
 
+  df = grabYields(df, args)
   if args.prune:
-    if not args.doABCD:
-      df = grabYields(df, args)
-      df = doPruning(df, args)
-    else:
-      cr_cats = [cat for cat in df.cat.unique() if cat[-2:]=="cr"]
-      nCats = len(cr_cats)
-      print(cr_cats)
-
-      df_cr = df[df.cat.isin(cr_cats)]
-
-      df_sr = df[~df.cat.isin(cr_cats)]
-      df_sr = grabYields(df_sr, args)
-      df_sr = doPruning(df_sr, args)
-
-      for cat in df_sr.cat.unique():
-        catnum = int(cat.split("cat")[1])
-        if catnum == nCats - 1:
-          print("Putting %s back in case it was pruned"%cat)
-          df_sr.loc[df_sr.cat==cat, "prune"] = 0
-        
-        # if prune all rows of this category (pruning whole category)
-        if df_sr[df_sr.cat==cat].prune.sum() == sum(df_sr.cat==cat):
-          cat_cr = cat+"cr"
-          print("Pruning %s because %s was pruned"%(cat_cr, cat))
-          df_cr.loc[df_cr.cat==cat_cr, "prune"] = 1
-
-      df = pd.concat([df_sr, df_cr])    
-      
+    df = doPruning(df, args)
   df = grabSystematics(df, args)
-  print(df)
 
   with open(args.output, "w") as f:
     opt=Options()
@@ -399,13 +326,12 @@ def main(args):
     td.writeBreak(f)
     for syst in systematics_ggtt.signal_shape_systematics:
       td.writeSystematic(f,df,syst,opt)
-    # if args.do_dy_bkg:
-    #   dy_systematics = createDYSystematics(df)
-    #   for syst in dy_systematics:
-    #     td.writeSystematic(f,df,syst,opt)
+    if args.do_dy_bkg:
+      dy_systematics = createDYSystematics(df)
+      for syst in dy_systematics:
+        td.writeSystematic(f,df,syst,opt)
     td.writeBreak(f)
-    cr_cats = [cat for cat in df.cat.unique() if cat[-2:]=="cr"]
-    td.writePdfIndex(f,df[~df.cat.isin(cr_cats)],opt,"_combined")
+    td.writePdfIndex(f,df,opt,"_combined")
 
     f.write("\nsignal_scaler rateParam * ggttres* 0.001\nnuisance edit freeze signal_scaler")
     for proc in df[df.prune==0].proc.unique():
@@ -422,61 +348,7 @@ def main(args):
       #for syst in dy_systematics:
       #  f.write("\nnuisance edit freeze %s"%("CMS_hgg_nuisance_"+syst["name"]))
 
-    if args.doABCD:
-      nCats = len(df.cat.unique())/2
-
-      to_add_to_group = []
-      for cat in sorted(df[df.prune==0].cat.unique())[::-1]:
-        if cat[-2:] == "cr":
-          continue
-        catnum = int(cat.split("cat")[1])
-        df_row = df[(df.proc=="data_obs")&(df.cat==cat+"cr")].iloc[0]
-        df_row.current_modelWSFile = bkg_workspace_file = "../Background/outdir_ggtt_resonant_combined_mx%dmy%d/fTest/output/CMS-HGG_ws_%s_combined.root"%(args.MX, args.MY, df_row["cat"])
-        cr_yield = getNEvents(df_row.current_modelWSFile, df_row.model)
-
-        if catnum == nCats - 1:
-          A_yield = cr_yield
-          f.write("\nABCD_A rateParam %scr dy_merged_hgg %d [0,1000000]"%(cat, cr_yield*0.9))
-          to_add_to_group.append("ABCD_A")
-          #f.write("\nABCD_A_nom rateParam %scr dy_merged_hgg %d"%(cat, cr_yield))
-          #f.write("\nnuisance edit freeze ABCD_A_nom")
-          #f.write("\nABCD_A_adj rateParam %scr dy_merged_hgg 1 [0,2]"%cat)
-          #to_add_to_group.append("ABCD_A_adj")
-          
-          f.write("\nveto_eff extArg 0.0015 [0,0.01]")
-          f.write("\nCMS_nuisance_veto_eff extArg 1.0 [0,5]")
-          f.write("\nCMS_nuisance_veto_eff                          param    0.0    0.0015")
-          f.write("\nABCD_C rateParam %s dy_merged_hgg (@0*(@1+@2)) ABCD_A,veto_eff,CMS_nuisance_veto_eff"%cat)
-          to_add_to_group.append("veto_eff")
-          #f.write("\nABCD_C_nom rateParam %s dy_merged_hgg 350"%cat)
-          #f.write("\nnuisance edit freeze ABCD_C_nom")
-          #f.write("\nABCD_C_adj rateParam %s dy_merged_hgg 1 [0,2]"%cat)
-          #to_add_to_group.append("ABCD_C_adj")
-
-          #f.write("\nCMS_nuisance_veto_eff param 1.0 1.0")
-          #f.write("\nveto_eff flatParam ((@0/@1)*@2) ABCD_C,ABCD_A,CMS_nuisance_veto_eff")
-        else:
-          f.write("\nABCD_B%d rateParam %scr dy_merged_hgg %d [0,10000]"%(catnum, cat, cr_yield*0.9))
-          to_add_to_group.append("ABCD_B%d"%catnum)
-          #f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*(@1/@2)) ABCD_C,ABCD_B%d,ABCD_A"%(catnum, cat, catnum))
-          f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*@1) ABCD_B%d,veto_eff"%(catnum, cat, catnum))
-
-          #f.write("\nABCD_B%d_nom rateParam %scr dy_merged_hgg %d"%(catnum, cat, cr_yield))
-          #f.write("\nnuisance edit freeze ABCD_B%d_nom"%catnum)
-          #f.write("\nABCD_B%d_adj rateParam %scr dy_merged_hgg 1 [0,2]"%(catnum, cat))
-          #to_add_to_group.append("ABCD_B%d_adj"%catnum)
-          #f.write("\nABCD_D%d rateParam %s dy_merged_hgg ((@0*@1)*((@2*@3)/(@4*@5))) ABCD_C_nom,ABCD_C_adj,ABCD_B%d_nom,ABCD_B%d_adj,ABCD_A_nom,ABCD_A_adj"%(catnum, cat, catnum, catnum))
-        f.write("\ndy_bkg_scaler rateParam %s dy_merged_hgg 1"%cat)
-        f.write("\ndy_falling_norm_%s rateParam %s* dy_falling %d [0,%d] "%(cat, cat, cr_yield*0.1, cr_yield*0.5))
-        f.write("\ndy_falling_scaler rateParam %s dy_falling 1 [0,2]"%cat)
-
-      f.write("\nnuisance edit freeze dy_bkg_scaler")
-      #f.write("\nnuisance edit freeze dy_falling_scaler")
-      f.write("\nABCD group = "+" ".join(to_add_to_group))
-
-      #f.write("\nABCD_veto_eff rateParam !(*cat) dy_merged_hgg 1 0,1")
-
-  #removeEmptySystematics(df, args.output)
+  removeEmptySystematics(df, args.output)
 
 if __name__=="__main__":
   parser = argparse.ArgumentParser()
@@ -491,8 +363,7 @@ if __name__=="__main__":
 
   parser.add_argument('--sig-model-dir', type=str, default="../SignalModelInterpolation/outdir", required=False)
   parser.add_argument('--res-bkg-model-dir', type=str, default="../SignalModelInterpolation/res_bkg_outdir", required=False)
-  #parser.add_argument('--dy-bkg-model-dir', type=str, default="../SignalModelInterpolation/dy_bkg_outdir", required=False)
-  parser.add_argument('--doABCD', action="store_true")
+  parser.add_argument('--dy-bkg-model-dir', type=str, default="../SignalModelInterpolation/dy_bkg_outdir", required=False)
 
   parser.add_argument('--prune', action="store_true")
   parser.add_argument('--pruneThreshold', type=float, default=0.01)

@@ -117,7 +117,7 @@ def grabSystematics(df, args):
     for idx, row in df.iterrows():
       proc, cat, year = row[["proc", "cat", "year"]]
       #print(proc)
-      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
+      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg"):
         val = '-'
       elif syst["type"] == "factory":
         val = findFactorySystematic(syst["name"], proc, cat, year, sig_systematics, res_bkg_systematics, args)
@@ -133,7 +133,7 @@ def grabSystematics(df, args):
 
     for idx, row in df.iterrows():
       proc, cat, year = row[["proc", "cat", "year"]]
-      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc) or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
+      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc) or (proc == "dy_merged_hgg"):
         val = '-'
       elif syst["type"] == "constant":
         nc = {"ggH":"ggH", "qqH":"VBF", "VH":"VH", "ttH":"ttH"} # name conversion
@@ -206,7 +206,7 @@ def grabYields(df, args):
   df["sig_yield"] = 0
   df["bkg_yield"] = 0
   for idx, row in df.iterrows():
-    if (row.proc == "bkg_mass") or (row.proc == "data_obs") or (row.proc == "dy_merged_hgg") or (row.proc == "dy_falling"):
+    if (row.proc == "bkg_mass") or (row.proc == "data_obs") or (row.proc == "dy_merged_hgg"):
       #norm = np.inf #ensure does not get pruned
       norm = 0
     else:
@@ -270,7 +270,7 @@ def doPruning(df, args):
       #print(df_cat_proc)
       assert len(df_cat_proc) == 1
       #if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (df_cat_proc.iloc[0]["sig_yield"] < 0.1*args.pruneThreshold*tot_yield):
-      if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (proc != "dy_falling") & (df_cat_proc.iloc[0]["sig_yield"] < 0.01):
+      if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (df_cat_proc.iloc[0]["sig_yield"] < 0.01):
         print("Pruning %s from %s, yield = %.2f"%(proc,cat,df_cat_proc.iloc[0]["sig_yield"]))
         df.loc[(df.cat==cat)&(df.proc==proc), "prune"] = 1
 
@@ -344,14 +344,11 @@ def main(args):
     new_rows.append(["data_obs", cat, "merged", -1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:roohist_data_mass_%s"%cat, 0])
   
     if args.doABCD:
-      #new_rows.append(["bkg_mass", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_bkgshape"%(cat+"cr"), 0])
-      new_rows.append(["dy_falling", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
+      new_rows.append(["bkg_mass", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_bkgshape"%(cat+"cr"), 0])
       new_rows.append(["data_obs", cat+"cr", "merged", -1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:roohist_data_mass_%s"%(cat+"cr"), 0])
       catnum = int(cat.split("cat")[1].split("cr")[0])
       new_rows.append(["dy_merged_hgg", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
       new_rows.append(["dy_merged_hgg", cat, "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
-
-      new_rows.append(["dy_falling", cat, "merged", 0.018, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
 
 
   df = pd.concat([df, pd.DataFrame(new_rows, columns=columns)], ignore_index=True)
@@ -436,30 +433,23 @@ def main(args):
 
         if catnum == nCats - 1:
           A_yield = cr_yield
-          f.write("\nABCD_A rateParam %scr dy_merged_hgg %d [0,1000000]"%(cat, cr_yield*0.9))
+          f.write("\nABCD_A rateParam %scr dy_merged_hgg %d [0,1000000]"%(cat, cr_yield))
           to_add_to_group.append("ABCD_A")
           #f.write("\nABCD_A_nom rateParam %scr dy_merged_hgg %d"%(cat, cr_yield))
           #f.write("\nnuisance edit freeze ABCD_A_nom")
           #f.write("\nABCD_A_adj rateParam %scr dy_merged_hgg 1 [0,2]"%cat)
           #to_add_to_group.append("ABCD_A_adj")
           
-          f.write("\nveto_eff extArg 0.0015 [0,0.01]")
-          f.write("\nCMS_nuisance_veto_eff extArg 1.0 [0,5]")
-          f.write("\nCMS_nuisance_veto_eff                          param    0.0    0.0015")
-          f.write("\nABCD_C rateParam %s dy_merged_hgg (@0*(@1+@2)) ABCD_A,veto_eff,CMS_nuisance_veto_eff"%cat)
-          to_add_to_group.append("veto_eff")
+          f.write("\nABCD_C rateParam %s dy_merged_hgg 350 [0,1000]"%cat)
+          to_add_to_group.append("ABCD_C")
           #f.write("\nABCD_C_nom rateParam %s dy_merged_hgg 350"%cat)
           #f.write("\nnuisance edit freeze ABCD_C_nom")
           #f.write("\nABCD_C_adj rateParam %s dy_merged_hgg 1 [0,2]"%cat)
           #to_add_to_group.append("ABCD_C_adj")
-
-          #f.write("\nCMS_nuisance_veto_eff param 1.0 1.0")
-          #f.write("\nveto_eff flatParam ((@0/@1)*@2) ABCD_C,ABCD_A,CMS_nuisance_veto_eff")
         else:
-          f.write("\nABCD_B%d rateParam %scr dy_merged_hgg %d [0,10000]"%(catnum, cat, cr_yield*0.9))
+          f.write("\nABCD_B%d rateParam %scr dy_merged_hgg %d [0,10000]"%(catnum, cat, cr_yield))
           to_add_to_group.append("ABCD_B%d"%catnum)
-          #f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*(@1/@2)) ABCD_C,ABCD_B%d,ABCD_A"%(catnum, cat, catnum))
-          f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*@1) ABCD_B%d,veto_eff"%(catnum, cat, catnum))
+          f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*(@1/@2)) ABCD_C,ABCD_B%d,ABCD_A"%(catnum, cat, catnum))
 
           #f.write("\nABCD_B%d_nom rateParam %scr dy_merged_hgg %d"%(catnum, cat, cr_yield))
           #f.write("\nnuisance edit freeze ABCD_B%d_nom"%catnum)
@@ -467,11 +457,8 @@ def main(args):
           #to_add_to_group.append("ABCD_B%d_adj"%catnum)
           #f.write("\nABCD_D%d rateParam %s dy_merged_hgg ((@0*@1)*((@2*@3)/(@4*@5))) ABCD_C_nom,ABCD_C_adj,ABCD_B%d_nom,ABCD_B%d_adj,ABCD_A_nom,ABCD_A_adj"%(catnum, cat, catnum, catnum))
         f.write("\ndy_bkg_scaler rateParam %s dy_merged_hgg 1"%cat)
-        f.write("\ndy_falling_norm_%s rateParam %s* dy_falling %d [0,%d] "%(cat, cat, cr_yield*0.1, cr_yield*0.5))
-        f.write("\ndy_falling_scaler rateParam %s dy_falling 1 [0,2]"%cat)
 
       f.write("\nnuisance edit freeze dy_bkg_scaler")
-      #f.write("\nnuisance edit freeze dy_falling_scaler")
       f.write("\nABCD group = "+" ".join(to_add_to_group))
 
       #f.write("\nABCD_veto_eff rateParam !(*cat) dy_merged_hgg 1 0,1")

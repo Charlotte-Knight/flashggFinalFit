@@ -28,7 +28,7 @@ def get_options():
 print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING PACKAGER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 def leave():
   print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUNNING PACKAGER (END) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  sys.exit(1)
+  sys.exit(0)
 
 # Store all opts in orderedDict for submissionTools
 options = od()

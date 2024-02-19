@@ -29,22 +29,12 @@ def main(f_in, cat, f_out):
     DataHistFit.plotOn(frame)
 
     # bkg model
+    pname="model_%s_combined_exp1_p0"%cat
+    p0 = ROOT.RooRealVar(pname,pname,-0.1,-1., 0.)
+    #funcname="CMS_hgg_%s_combined_13TeV_bkgshape"%cat
     funcname="CMS_hgg_%s_combined_13TeV_dy_falling"%cat
-    prefix = "dy_falling_%s_bern4"%cat
-    to_save = []
-    paramList = ROOT.RooArgList()
+    bkg = ROOT.RooExponential(funcname,funcname,xvar,p0)
 
-    order = 4
-    for i in range(order):
-      pname = "%s_p%g"%(prefix,i)
-      p = ROOT.RooRealVar(pname,pname,0.1*(i+1),-15.,15.)
-      f = ROOT.RooFormulaVar("%s_sq"%pname,"%s_sq"%pname,"@0*@0",ROOT.RooArgList(p))
-      # Add params (and functions) to model
-      to_save.append(p)
-      to_save.append(f)
-      paramList.add(f)
-    # Make Bernsteins
-    bkg = ROOT.RooBernsteinFast(order)(funcname,funcname,xvar,paramList)
 
     # signal model
     proc="dy"
