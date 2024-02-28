@@ -20,23 +20,20 @@
 # Specify as list in dict: e.g. 'tiers'=['inc','inorm','norm','ishape','shape']
 
 theory_systematics = [
-  {'name':'BR_hgg','title':'BR_hgg','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"0.98/1.021"},
-  {'name':'QCDscale_ggH','title':'QCDscale_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.931/1.047'},
-  {'name':'QCDscale_qqH','title':'QCDscale_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.997/1.004'},
-  {'name':'QCDscale_VH','title':'QCDscale_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.993/1.005'},
-  {'name':'QCDscale_ttH','title':'QCDscale_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.908/1.058'},
-  {'name':'pdf_Higgs_ggH','title':'pdf_Higgs_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.019'},
-  {'name':'pdf_Higgs_qqH','title':'pdf_Higgs_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.021'},
-  {'name':'pdf_Higgs_VH','title':'pdf_Higgs_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.017'},
-  {'name':'pdf_Higgs_ttH','title':'pdf_Higgs_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.030'},
-  {'name':'alphaS_ggH','title':'alphaS_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.026'},
-  {'name':'alphaS_qqH','title':'alphaS_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.005'},
-  {'name':'alphaS_VH','title':'alphaS_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.009'},
-  {'name':'alphaS_ttH','title':'alphaS_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.020'}
-               ]
-# PDF weight
-#for i in range(1,60): theory_systematics.append( {'name':'pdfWeight_%g'%i, 'title':'CMS_hgg_pdfWeight_%g'%i, 'type':'factory','prior':'lnN','correlateAcrossYears':1,'tiers':['shape']} )
-
+                {'name':'BR_hgg','title':'BR_hgg','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':"0.98/1.021"},
+                {'name':'QCDscale_ggH','title':'QCDscale_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.931/1.047'},
+                {'name':'QCDscale_qqH','title':'QCDscale_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.997/1.004'},
+                {'name':'QCDscale_VH','title':'QCDscale_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.993/1.005'},
+                {'name':'QCDscale_ttH','title':'QCDscale_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'0.908/1.058'},
+                {'name':'pdf_Higgs_ggH','title':'pdf_Higgs_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.019'},
+                {'name':'pdf_Higgs_qqH','title':'pdf_Higgs_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.021'},
+                {'name':'pdf_Higgs_VH','title':'pdf_Higgs_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.017'},
+                {'name':'pdf_Higgs_ttH','title':'pdf_Higgs_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.030'},
+                {'name':'alphaS_ggH','title':'alphaS_ggH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.026'},
+                {'name':'alphaS_qqH','title':'alphaS_qqH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.005'},
+                {'name':'alphaS_VH','title':'alphaS_VH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.009'},
+                {'name':'alphaS_ttH','title':'alphaS_ttH','type':'constant','prior':'lnN','correlateAcrossYears':1,'value':'1.020'}
+]
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # EXPERIMENTAL SYSTEMATICS
@@ -46,40 +43,93 @@ theory_systematics = [
 
 experimental_systematics = [
                 # Updated luminosity partial-correlation scheme: 13/5/21 (recommended simplified nuisances)
-                {'name':'lumi_13TeV_','title':'lumi_13TeV','type':'constant','prior':'lnN','correlateAcrossYears':0,'value':{'2016':'1.010','2017':'1.020','2018':'1.015'}},
-                {'name':'lumi_13TeV_correlated','title':'lumi_13TeV_correlated','type':'constant','prior':'lnN','correlateAcrossYears':-1,'value':{'2016':'1.006','2017':'1.009','2018':'1.020'}},
-                {'name':'lumi_13TeV_1718','title':'lumi_13TeV_1718','type':'constant','prior':'lnN','correlateAcrossYears':-1,'value':{'2016':'-','2017':'1.006','2018':'1.002'}},
+                {'name':'lumi_13TeV_Uncorrelated','title':'lumi_13TeV_uncorrelated','type':'constant','prior':'lnN','correlateAcrossYears':0,'value':{'2016':'1.010','2017':'1.020','2018':'1.015'}},
+                {'name':'lumi_13TeV_Correlated','title':'lumi_13TeV_correlated','type':'constant','prior':'lnN','correlateAcrossYears':-1,'value':{'2016':'1.006','2017':'1.009','2018':'1.020'}},
+                {'name':'lumi_13TeV_Correlated_1718','title':'lumi_13TeV_1718','type':'constant','prior':'lnN','correlateAcrossYears':-1,'value':{'2016':'-','2017':'1.006','2018':'1.002'}},
+                
+                # jet energy scale
+                {'name':'Jet_jesAbsolute','title':'CMS_scale_j_Abs','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'Jet_jesAbsolute_year','title':'CMS_scale_j_Abs','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+                {'name':'Jet_jesBBEC1','title':'CMS_scale_j_BBEC1','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'Jet_jesBBEC1_year','title':'CMS_scale_j_BBEC1','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                {'name':'Jet_jesEC2','title':'CMS_scale_j_EC2','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'Jet_jesEC2_year','title':'CMS_scale_j_EC2','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                {'name':'Jet_jesFlavorQCD','title':'CMS_scale_j_FlavQCD','type':'factory','prior':'lnN','correlateAcrossYears':1},
+
+                {'name':'Jet_jesHF','title':'CMS_scale_j_HF','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'Jet_jesHF_year','title':'CMS_scale_j_HF','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+                {'name':'Jet_jesRelativeBal','title':'CMS_scale_j_RelBal','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                              
+                {'name':'Jet_jesRelativeSample_year','title':'CMS_scale_j_RelSample','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                # MET jet energy scale
+                {'name':'MET_jesAbsolute','title':'CMS_MET_scale_j_Abs','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'MET_jesAbsolute_year','title':'CMS_MET_scale_j_Abs','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+                {'name':'MET_jesBBEC1','title':'CMS_MET_scale_j_BBEC1','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'MET_jesBBEC1_year','title':'CMS_MET_scale_j_BBEC1','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                {'name':'MET_jesEC2','title':'CMS_MET_scale_j_EC2','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'MET_jesEC2_year','title':'CMS_MET_scale_j_EC2','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                {'name':'MET_jesFlavorQCD','title':'CMS_MET_scale_j_FlavQCD','type':'factory','prior':'lnN','correlateAcrossYears':1},
+
+                {'name':'MET_jesHF','title':'CMS_MET_scale_j_HF','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'MET_jesHF_year','title':'CMS_MET_scale_j_HF','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+                {'name':'MET_jesRelativeBal','title':'CMS_MET_scale_j_RelBal','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                              
+                {'name':'MET_jesRelativeSample_year','title':'CMS_MET_scale_j_RelSample','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                # MET
+                {'name':'MET_Unclustered','title':'CMS_unclusteredEnergy','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
+                {'name':'electron_veto_sf_Diphoton_Photon','title':'CMS_eff_e_veto','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'electron_id_sf_SelectedElectron','title':'CMS_eff_e_id','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'muon_id_sfSTAT_SelectedMuon','title':'CMS_eff_m_id_stat','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'muon_id_sfSYS_SelectedMuon','title':'CMS_eff_m_id_sys','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'muon_iso_sfSTAT_SelectedMuon','title':'CMS_eff_m_iso_stat','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'muon_iso_sfSYS_SelectedMuon','title':'CMS_eff_m_iso_sys','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'trigger_sf','title':'CMS_hgg_TriggerWeight','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'puWeight','title':'CMS_pileup','type':'factory','prior':'lnN','correlateAcrossYears':0},
                 {'name':'JER','title':'CMS_res_j','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'JES','title':'CMS_scale_j','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                #{'name':'MET_JER','title':'CMS_res_met','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'MET_JES','title':'CMS_scale_met','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'MET_Unclustered','title':'CMS_met_unclustered','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'L1_prefiring_sf','title':'CMS_hgg_L1_prefiring_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'trigger_sf','title':'CMS_hgg_trigger_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+
                 {'name':'Muon_pt','title':'CMS_scale_m','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'Tau_pt','title':'CMS_scale_t','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'electron_id_sf_SelectedElectron','title':'CMS_electron_id_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'electron_veto_sf_Diphoton_Photon','title':'CMS_hgg_electron_veto_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'muon_id_sfSTAT_SelectedMuon','title':'CMS_muon_id_sfSYS','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'muon_id_sfSYS_SelectedMuon','title':'CMS_muon_iso_sfSTAT','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'muon_iso_sfSTAT_SelectedMuon','title':'CMS_muon_iso_sfSTAT','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'muon_iso_sfSYS_SelectedMuon','title':'CMS_muon_iso_sfSYS','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'photon_id_sf_Diphoton_Photon','title':'CMS_photon_id_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'photon_presel_sf_Diphoton_Photon','title':'CMS_hgg_presel_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'tau_idDeepTauVSe_sf_AnalysisTau','title':'CMS_tau_idDeepTauVSe_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'tau_idDeepTauVSjet_sf_AnalysisTau','title':'CMS_tau_idDeepTauVSjet_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'tau_idDeepTauVSmu_sf_AnalysisTau','title':'CMS_tau_idDeepTauVSmu_sf','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'btag_deepjet_sf_SelectedJet_cferr1','title':'CMS_btag_cferr1_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':-1},
-                {'name':'btag_deepjet_sf_SelectedJet_cferr2','title':'CMS_btag_cferr2_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':-1},
-                {'name':'btag_deepjet_sf_SelectedJet_hf','title':'CMS_btag_HF_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':-1},
-                {'name':'btag_deepjet_sf_SelectedJet_hfstats1','title':'CMS_btag_hfstats1','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'btag_deepjet_sf_SelectedJet_hfstats2','title':'CMS_btag_hfstats2','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'Tau_pt','title' :'CMS_scale_t','type':'factory','prior':'lnN','correlateAcrossYears':0},
+
                 {'name':'btag_deepjet_sf_SelectedJet_jes','title':'CMS_btag_jes','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'btag_deepjet_sf_SelectedJet_lf','title':'CMS_btag_LF_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':-1},
+                {'name':'btag_deepjet_sf_SelectedJet_lf','title':'CMS_btag_LF_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'btag_deepjet_sf_SelectedJet_hf','title':'CMS_btag_HF_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':1},
                 {'name':'btag_deepjet_sf_SelectedJet_lfstats1','title':'CMS_btag_lfstats1','type':'factory','prior':'lnN','correlateAcrossYears':0},
                 {'name':'btag_deepjet_sf_SelectedJet_lfstats2','title':'CMS_btag_lfstats2','type':'factory','prior':'lnN','correlateAcrossYears':0},
-                {'name':'puWeight','title':'CMS_pileup','type':'factory','prior':'lnN','correlateAcrossYears':0}
-              ]
+                {'name':'btag_deepjet_sf_SelectedJet_hfstats1','title':'CMS_btag_hfstats1','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'btag_deepjet_sf_SelectedJet_hfstats2','title':'CMS_btag_hfstats2','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'btag_deepjet_sf_SelectedJet_cferr1','title':'CMS_btag_cferr1_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':1},
+                {'name':'btag_deepjet_sf_SelectedJet_cferr2','title':'CMS_btag_cferr2_2016_2017_2018','type':'factory','prior':'lnN','correlateAcrossYears':1},
+
+                {'name':'tau_idDeepTauVSe_sf_AnalysisTau','title':'CMS_eff_tau_idDeepTauVSe','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'tau_idDeepTauVSmu_sf_AnalysisTau','title':'CMS_eff_tau_idDeepTauVSmu','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                
+        
+                {'name':'photon_id_sf_Diphoton_Photon','title':'CMS_eff_g_IDMVA','type':'factory','prior':'lnN','correlateAcrossYears':0},
+                {'name':'photon_presel_sf_Diphoton_Photon','title':'CMS_hgg_Presel_SF','type':'factory','prior':'lnN','correlateAcrossYears':0},
+]
+
+for i in range(1, 10):
+  experimental_systematics.append({'name':'idDeepTauVSjet_stat_ptbin%d'%i,'title':'CMS_eff_tau_idDeepTauVSjet_stat_bin%d'%i,'type':'factory','prior':'lnN','correlateAcrossYears':0})
+for era in ["2016_preVFP", "2016_postVFP", "2017", "2018"]:
+  experimental_systematics.append({'name':'idDeepTauVSjet_syst_%s'%era,'title':'CMS_eff_tau_idDeepTauVSjet_syst_%s'%era,'type':'factory','prior':'lnN','correlateAcrossYears':1})
+experimental_systematics.append({'name':'idDeepTauVSjet_syst_alleras','title':'CMS_eff_tau_idDeepTauVSjet_syst_alleras','type':'factory','prior':'lnN','correlateAcrossYears':1})
+
+for i in range(1, 3):
+  experimental_systematics.append({'name':'idDeepTauVSjet_stat_highpT_bin%d'%i,'title':'CMS_eff_tau_idDeepTauVSjet_stat_highpT_bin%d'%i,'type':'factory','prior':'lnN','correlateAcrossYears':0})
+experimental_systematics.append({'name':'idDeepTauVSjet_syst_highpT','title':'CMS_eff_tau_idDeepTauVSjet_syst_highpT','type':'factory','prior':'lnN','correlateAcrossYears':1})
+experimental_systematics.append({'name':'idDeepTauVSjet_syst_highpT_extrap','title':'CMS_eff_tau_idDeepTauVSjet_syst_highpT_extrap','type':'factory','prior':'lnN','correlateAcrossYears':1})
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -87,8 +137,8 @@ experimental_systematics = [
 # mode = (other,scalesGlobal,scales,scalesCorr,smears): match the definition in the signal models
 
 signal_shape_systematics = [
-                {'name':'funf','title':'funf','type':'signal_shape','mode':'scalesCorr','mean':'0.0','sigma':'1.0'},
-                {'name':'material','title':'material','type':'signal_shape','mode':'scalesCorr','mean':'0.0','sigma':'1.0'},
-                {'name':'MCSmear_smear','title':'MCSmear_smear','type':'signal_shape','mode':'smears','mean':'0.0','sigma':'1.0'},
                 {'name':'MCScale_scale','title':'MCScale_scale','type':'signal_shape','mode':'scales','mean':'0.0','sigma':'1.0'},
-              ]
+                {'name':'MCSmear_smear','title':'MCSmear_smear','type':'signal_shape','mode':'smears','mean':'0.0','sigma':'1.0'},
+                {'name':'material','title':'material','type':'signal_shape','mode':'scalesCorr','mean':'0.0','sigma':'1.0'},
+                {'name':'fnuf','title':'fnuf','type':'signal_shape','mode':'scalesCorr','mean':'0.0','sigma':'1.0'},
+]

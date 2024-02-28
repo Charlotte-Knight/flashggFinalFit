@@ -16,9 +16,17 @@ source setup.sh
 # sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/Interpolation
 # res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/ResonantBkg
 
-trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/outputTrees
-sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/Interpolation
-res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/ResonantBkg
+# trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton/outputTrees
+# sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/Interpolation
+# sig_model_di=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGWWdi/Interpolation
+# sig_model_semi=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGWWsemi/Interpolation
+# res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Graviton_Feb24/GGTT/ResonantBkg
+
+trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/outputTrees
+sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion_Feb24/GGTT/Interpolation
+sig_model_di=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion_Feb24/GGWWdi/Interpolation
+sig_model_semi=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion_Feb24/GGWWsemi/Interpolation
+res_bkg_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion_Feb24/GGTT/ResonantBkg
 
 # trees=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/outputTrees
 # sig_model=/home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Radion/Interpolation
@@ -62,6 +70,9 @@ mggh=180
 plot_blinding_region="115,135"
 get_mh() {
   echo 125.38
+}
+get_mh_int() {
+  echo 125
 }
 lumiMap="lumiMap = {'2016':36.31, '2017':41.48, '2018':59.83, 'combined':137.65, 'merged':137.65}"
 
@@ -120,109 +131,106 @@ for year in $bkg_years ; do
     done
 done
 
-for year in $bkg_years ; do
-    for m in $masses ; do
-      echo ${PWD}
-      #./get_limit_hadd_tree2ws.sh $trees $proc_template $year $m $mggl $mggh
-      qsub -q hep.q -l h_rt=300 get_limit_hadd_tree2ws.sh $trees $proc_template $year $m $mggl $mggh
-    done
-done
+# for year in $bkg_years ; do
+#     for m in $masses ; do
+#       echo ${PWD}
+#       #./get_limit_hadd_tree2ws.sh $trees $proc_template $year $m $mggl $mggh
+#       qsub -q hep.q -l h_rt=300 get_limit_hadd_tree2ws.sh $trees $proc_template $year $m $mggl $mggh
+#     done
+# done
 
-wait_batch get_limit_hadd_tree2ws
+# wait_batch get_limit_hadd_tree2ws
 
-#ls -lh /home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/LimitVsMinNum/10/outputTrees/combined/*/ws/data_combined/*
+# #ls -lh /home/hep/mdk16/PhD/ggtt/ResonantGGTT/Outputs/Y_gg_Low_Mass/LimitVsMinNum/10/outputTrees/combined/*/ws/data_combined/*
 
-pushd Background
-  for year in $bkg_years ; do
-    for m in $masses ; do
-      proc=${proc_template}${m}
-      cp config_ggtt_batch.py config_ggtt_batch_${year}_${m}.py
-      sed -i "s;<trees/year/m/ws/signal_year>;${trees}/${year}/${m}/ws/data_${year};g" config_ggtt_batch_${year}_${m}.py
-      sed -i "s;<signal_year>_<m>;${year}_${m};g" config_ggtt_batch_${year}_${m}.py
-      sed -i "s;<signal_year>;${year};g" config_ggtt_batch_${year}_${m}.py
+# pushd Background
+#   for year in $bkg_years ; do
+#     for m in $masses ; do
+#       proc=${proc_template}${m}
+#       cp config_ggtt_batch.py config_ggtt_batch_${year}_${m}.py
+#       sed -i "s;<trees/year/m/ws/signal_year>;${trees}/${year}/${m}/ws/data_${year};g" config_ggtt_batch_${year}_${m}.py
+#       sed -i "s;<signal_year>_<m>;${year}_${m};g" config_ggtt_batch_${year}_${m}.py
+#       sed -i "s;<signal_year>;${year};g" config_ggtt_batch_${year}_${m}.py
       
-      mh=$(get_mh $m)
-      if (( $mh < 83 )); then
-        low_bound=68 #low mass exception
-      else
-        low_bound=$(expr ${mh} - $((10*${mh}/125)) )
-      fi      
-      high_bound=$(expr ${mh} + $((10*${mh}/125)) )
-      python RunBackgroundScripts_lite.py --inputConfig config_ggtt_batch_${year}_${m}.py --mode fTest --modeOpts "--blindingRegion ${low_bound},${high_bound} --plotBlindingRegion ${plot_blinding_region} --gofCriteria 0.01" > /dev/null &
-      sleep 0.5
-    done
-  done
+#       mh=$(get_mh_int $m)
+#       if (( $mh < 83 )); then
+#         low_bound=68
+#       else
+#         low_bound=$(expr ${mh} - $((10*${mh}/125)) )
+#       fi      
+#       high_bound=$(expr ${mh} + $((10*${mh}/125)) )
+#       python RunBackgroundScripts_lite.py --inputConfig config_ggtt_batch_${year}_${m}.py --mode fTest --modeOpts "--blindingRegion ${low_bound},${high_bound} --plotBlindingRegion ${plot_blinding_region} --gofCriteria 0.01" > /dev/null &
+#       sleep 0.5
+#     done
+#   done
 
-  wait $! #waits for last background submission
-  wait_batch sub_fTest
+#   wait $! #waits for last background submission
+#   wait_batch sub_fTest
 
-  failed_jobs=">> Failed job list \n"
+#   failed_jobs=">> Failed job list \n"
 
-  #check jobs successful
-  for ((i = 0 ; i < ${nCats} ; i++)); do
-    for year in $bkg_years ; do
-      for m in $masses ; do
+#   #check jobs successful
+#   for ((i = 0 ; i < ${nCats} ; i++)); do
+#     for year in $bkg_years ; do
+#       for m in $masses ; do
         
-        proc=${proc_template}${m}
-        if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
-          failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.01 -> 0.005 \n"
-          echo ${year} ${m} cat${i}
-          pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
-            sed -i 's/--gofCriteria 0.01/--gofCriteria 0.005/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
-            set +e
-            ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log #2>&1
-            set -e
-          popd
-        fi
+#         proc=${proc_template}${m}
+#         if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
+#           failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.01 -> 0.005 \n"
+#           echo ${year} ${m} cat${i}
+#           pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
+#             sed -i 's/--gofCriteria 0.01/--gofCriteria 0.005/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
+#             set +e
+#             ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log #2>&1
+#             set -e
+#           popd
+#         fi
 
-        if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
-          failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.005 -> 0.001 \n"
-          pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
-            sed -i 's/--gofCriteria 0.005/--gofCriteria 0.001/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
-            set +e
-            ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log 2>&1
-            set -e
-          popd
-        fi
+#         if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
+#           failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.005 -> 0.001 \n"
+#           pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
+#             sed -i 's/--gofCriteria 0.005/--gofCriteria 0.001/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
+#             set +e
+#             ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log 2>&1
+#             set -e
+#           popd
+#         fi
 
-        if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
-          failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.001 -> 0.0 \n"
-          pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
-            sed -i 's/--gofCriteria 0.001/--gofCriteria 0.0/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
-            ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log 2>&1
-          popd
-        fi
+#         if ! test -f outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root; then
+#           failed_jobs=${failed_jobs}"${year} ${m} cat${i} 0.001 -> 0.0 \n"
+#           pushd outdir_ggtt_resonant_${year}_${m}/fTest/jobs
+#             sed -i 's/--gofCriteria 0.001/--gofCriteria 0.0/g' sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh
+#             ./sub_fTest_ggtt_resonant_combined_${m}_${proc}cat${i}.sh >> rerunning_background.log 2>&1
+#           popd
+#         fi
 
-        #mv outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}_${year}.root
+#         #mv outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}.root outdir_ggtt_resonant_${year}_${m}/fTest/output/CMS-HGG_multipdf_${proc}cat${i}_${year}.root
 
-      done
-    done
-  done
+#       done
+#     done
+#   done
 
-  for year in $bkg_years ; do
-    rename .root _${year}.root outdir_ggtt_resonant_${year}_*/fTest/output/*.root
-  done
+#   for year in $bkg_years ; do
+#     rename .root _${year}.root outdir_ggtt_resonant_${year}_*/fTest/output/*.root
+#   done
 
-  echo -e $failed_jobs
-popd
+#   echo -e $failed_jobs
+# popd
 
-pushd SignalModelInterpolation
-  python create_signal_ws_new_cat_2d.py -i $sig_model -o outdir --mgg-range $mggl $mggh
-  python create_signal_ws_new_cat_2d_res_bkg.py -i $res_bkg_model -o res_bkg_outdir
-  # if [[ -n $do_dy_bkg ]]; then 
-  #   python create_signal_ws_new_cat_2d_dy_bkg.py -i $dy_bkg_model -o dy_bkg_outdir
-  # fi
-popd
+# pushd SignalModelInterpolation
+#   python create_signal_ws_new_cat_2d.py -i $sig_model -o outdir --mgg-range $mggl $mggh --proc-name ggtt
+#   python create_signal_ws_new_cat_2d.py -i $sig_model_di -o outdir --mgg-range $mggl $mggh --proc-name ggwwdileptonic
+#   python create_signal_ws_new_cat_2d.py -i $sig_model_semi -o outdir --mgg-range $mggl $mggh --proc-name ggwwsemileptonic
+#   python create_signal_ws_new_cat_2d_res_bkg.py -i $res_bkg_model -o res_bkg_outdir
+#   # if [[ -n $do_dy_bkg ]]; then 
+#   #   python create_signal_ws_new_cat_2d_dy_bkg.py -i $dy_bkg_model -o dy_bkg_outdir
+#   # fi
+# popd
 
 pushd Datacard
   for m in $masses ; do
-    if [[ -n $do_dy_bkg ]]; then 
-      #../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m) $do_dy_bkg
-      qsub -q hep.q -l h_rt=1200 ../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m) $do_dy_bkg
-    else
-      #../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m)
-      qsub -q hep.q -l h_rt=1200 ../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m)
-    fi
+    ../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m) $do_dy_bkg
+    #qsub -q hep.q -l h_rt=1200 ../get_limit_datacard.sh $sig_model $res_bkg_model $m $(get_mh $m) $(get_mx $m) $(get_my $m) $do_dy_bkg
   done
 
   wait_batch get_limit_datacard
@@ -241,8 +249,8 @@ pushd Combine
  cp ../Datacard/Datacard_ggtt_resonant*.txt .
 
  for m in $masses ; do
-  #../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
-  qsub -q hep.q -l h_rt=3600 ../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
+  ../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
+  #qsub -q hep.q -l h_rt=3600 ../get_limit_workspace.sh $mggl $mggh $(get_mx $m) $(get_my $m) $(get_mh $m)
  done
 
  wait_batch get_limit_workspace
@@ -274,10 +282,11 @@ pushd Combine
       do_impacts=0
     fi
     
+    do_impacts=0
     #../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan $do_impacts
-    qsub -q hep.q -l h_rt=7200 ../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan $do_impacts
+    qsub -q hep.q -l h_rt=10800 -pe hep.pe 8 ../get_limit_combine.sh $mggl $mggh $(get_mx $m) $(get_my $m) $mh_scan $do_impacts
   done
-done
+ done
 
  wait_batch get_limit_combine
 

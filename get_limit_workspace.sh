@@ -8,8 +8,6 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 source /vols/grid/cms/setup.sh
 source setup.sh
 
-mh=125
-
 mggl=$1
 mggh=$2
 mx=$3
@@ -20,6 +18,5 @@ m="mx${mx}my${my}"
 mo="mx${mx}my${my}mh${mh}"
 
 pushd Combine
-  python RunText2Workspace.py --mode  ggtt_resonant --dryRun --ext _ggtt_resonant_${m} --common_opts "-m ${mh} higgsMassRange=${mggl},${mggh} --channel-masks"
-  ./t2w_jobs/t2w_ggtt_resonant_ggtt_resonant_${m}.sh
+  text2workspace.py Datacard_ggtt_resonant_${m}.txt -o Datacard_ggtt_resonant_${m}_ggtt_resonant.root -m $mh higgsMassRange=${mggl},${mggh}
 popd

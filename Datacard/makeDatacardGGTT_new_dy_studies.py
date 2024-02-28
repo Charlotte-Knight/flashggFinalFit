@@ -18,9 +18,8 @@ class Options:
     self.doSTXSScaleCorrelationScheme = False
 
 def renameProc(proc, year, args):
-  print(proc)
-  if "sig" in proc:
-    return "%smx%dmy%d_%s_hgg"%(proc.split("_")[1], args.MX, args.MY, year)
+  if proc == "sig":
+    return "ggttresmx%dmy%d_%s_hgg"%(args.MX, args.MY, year)
   else:
     return proc+"_%s_hgg"%year
 
@@ -28,26 +27,24 @@ def renameCat(cat, args):
   return "ggttresmx%dmy%d"%(args.MX, args.MY)+cat
 
 def getProcesses(model_dir, args):
-  files = list(filter(lambda x: ".root" in x , os.listdir(model_dir)))
+  files = os.listdir(model_dir)
 
   all_processes = []
   for f in files:
     #files are formatted like proc_year_cat.root
     fname = f
     parts = f.split(".root")[0].split("_")
-    print(parts)
     year = parts[-2]
-    og_proc = f.replace(".root", "")
     proc = renameProc("_".join(parts[:-2]), year, args)
     cat = renameCat(parts[-1], args)
 
     if parts[0] == "sig":
-      model = "wsig_13TeV:"+f.replace(".root", "") # e.g sig_ggtt_2016_cat0
+      model = "wsig_13TeV:"+"sig_%s_%s"%(year, parts[-1]) # e.g sig_2016_cat0
     else:
       basic_proc = "_".join(parts[:-2]) # e.g. ttH_M125
       model = "wsig_13TeV:"+"sig_%s_%s_%s"%(year, parts[-1], basic_proc)
     
-    all_processes.append([f, model, proc, cat, year, og_proc])
+    all_processes.append([f, model, proc, cat, year])
   return all_processes
 
 def attemptLoadSystematics(json_location):
@@ -65,10 +62,10 @@ def getValFromDict(sys_dict, sys_name):
     val = [sys_dict[sys_name+"_left"], sys_dict[sys_name+"_right"]]
   return val
 
-def findFactorySystematic(sys_name, proc, cat, year, sig_systematics, res_bkg_systematics, args, og_proc):
-  if "ggtt" in proc or "ggww" in proc:
+def findFactorySystematic(sys_name, proc, cat, year, sig_systematics, res_bkg_systematics, args):
+  if "ggtt" in proc:
     if sig_systematics != None:
-      sys_dict = sig_systematics[og_proc]["%d_%d"%(args.MX, args.MY)]
+      sys_dict = sig_systematics[str(year)][str(cat[-1])]["%d_%d"%(args.MX, args.MY)]
       val = getValFromDict(sys_dict, sys_name)
     else:
       val = [1,1]
@@ -101,7 +98,7 @@ def addMigrationSystematics(df):
     systematics_ggtt.experimental_systematics.append(template_copy)
 
 def grabSystematics(df, args):
-  sig_systematics = {og_proc: attemptLoadSystematics(os.path.join(args.sig_model_dir, "%s.json"%og_proc)) for og_proc in df.og_proc.unique() if "sig" in og_proc}
+  sig_systematics = attemptLoadSystematics(args.sig_syst)
   res_bkg_systematics = attemptLoadSystematics(args.res_bkg_syst)
 
   addMigrationSystematics(df)
@@ -109,7 +106,7 @@ def grabSystematics(df, args):
   years = df.year.unique()
 
   for syst in systematics_ggtt.experimental_systematics:
-    if syst["correlateAcrossYears"] != 0:
+    if syst["correlateAcrossYears"] == -1:
       df[syst["name"]] = '-'
       df_name = lambda sys_name, year: sys_name
     else:
@@ -118,11 +115,12 @@ def grabSystematics(df, args):
       df_name = lambda sys_name, year: "%s_%s"%(sys_name, year)
 
     for idx, row in df.iterrows():
-      proc, cat, year, og_proc = row[["proc", "cat", "year", "og_proc"]]
-      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg"):
+      proc, cat, year = row[["proc", "cat", "year"]]
+      #print(proc)
+      if (proc == "bkg_mass") or (proc == "data_obs") or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
         val = '-'
       elif syst["type"] == "factory":
-        val = findFactorySystematic(syst["name"], proc, cat, year, sig_systematics, res_bkg_systematics, args, og_proc)
+        val = findFactorySystematic(syst["name"], proc, cat, year, sig_systematics, res_bkg_systematics, args)
       elif syst["type"] == "constant":
         val = syst["value"][str(year)]
       else:
@@ -135,7 +133,7 @@ def grabSystematics(df, args):
 
     for idx, row in df.iterrows():
       proc, cat, year = row[["proc", "cat", "year"]]
-      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc) or (proc == "dy_merged_hgg"):
+      if (proc == "bkg_mass") or (proc == "data_obs") or ("ggtt" in proc) or (proc == "dy_merged_hgg") or (proc == "dy_falling"):
         val = '-'
       elif syst["type"] == "constant":
         nc = {"ggH":"ggH", "qqH":"VBF", "VH":"VH", "ttH":"ttH"} # name conversion
@@ -208,7 +206,7 @@ def grabYields(df, args):
   df["sig_yield"] = 0
   df["bkg_yield"] = 0
   for idx, row in df.iterrows():
-    if (row.proc == "bkg_mass") or (row.proc == "data_obs") or (row.proc == "dy_merged_hgg"):
+    if (row.proc == "bkg_mass") or (row.proc == "data_obs") or (row.proc == "dy_merged_hgg") or (row.proc == "dy_falling"):
       #norm = np.inf #ensure does not get pruned
       norm = 0
     else:
@@ -271,8 +269,8 @@ def doPruning(df, args):
       df_cat_proc = df[(df.cat==cat)&(df.proc==proc)]
       #print(df_cat_proc)
       assert len(df_cat_proc) == 1
-      is_signal = ("ggtt" in proc or "ggww" in proc)
-      if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (df_cat_proc.iloc[0]["sig_yield"] < 0.1*args.pruneThreshold*tot_yield) & (not is_signal):
+      #if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (df_cat_proc.iloc[0]["sig_yield"] < 0.1*args.pruneThreshold*tot_yield):
+      if (proc != "bkg_mass") & (proc != "data_obs") & (proc != "dy_merged_hgg") & (proc != "dy_falling") & (df_cat_proc.iloc[0]["sig_yield"] < 0.01):
         print("Pruning %s from %s, yield = %.2f"%(proc,cat,df_cat_proc.iloc[0]["sig_yield"]))
         df.loc[(df.cat==cat)&(df.proc==proc), "prune"] = 1
 
@@ -323,15 +321,15 @@ def getNEvents(modelWSFile, current_modelWSFile):
   return nevents
 
 def main(args):
-  columns = ["proc", "cat", "year", "rate", "modelWSFile", "current_modelWSFile", "model", "prune", "og_proc"]
+  columns = ["proc", "cat", "year", "rate", "modelWSFile", "current_modelWSFile", "model", "prune"]
   rows = []
 
-  for fname, model, proc, cat, year, og_proc in getProcesses(args.sig_model_dir, args):
-    rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/signal", fname), os.path.join(args.sig_model_dir, fname), model, 0, og_proc])
+  for fname, model, proc, cat, year in getProcesses(args.sig_model_dir, args):
+    rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/signal", fname), os.path.join(args.sig_model_dir, fname), model, 0])
 
   if args.do_res_bkg:
-    for fname, model, proc, cat, year, og_proc in getProcesses(args.res_bkg_model_dir, args):
-      rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/res_bkg", fname), os.path.join(args.res_bkg_model_dir, fname), model, 0, og_proc])
+    for fname, model, proc, cat, year in getProcesses(args.res_bkg_model_dir, args):
+      rows.append([proc, cat, year, lumiMap[year]*1000, os.path.join("./Models/res_bkg", fname), os.path.join(args.res_bkg_model_dir, fname), model, 0])
 
   # if args.do_dy_bkg:
   #   for fname, model, proc, cat, year in getProcesses(args.dy_bkg_model_dir, args):
@@ -342,15 +340,18 @@ def main(args):
 
   new_rows = []
   for cat in df.cat.unique():
-    new_rows.append(["bkg_mass", cat, "merged", 1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:CMS_hgg_%s_combined_13TeV_bkgshape"%cat, 0, ""])
-    new_rows.append(["data_obs", cat, "merged", -1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:roohist_data_mass_%s"%cat, 0, ""])
+    new_rows.append(["bkg_mass", cat, "merged", 1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:CMS_hgg_%s_combined_13TeV_bkgshape"%cat, 0])
+    new_rows.append(["data_obs", cat, "merged", -1, "./Models/background/CMS-HGG_multipdf_%s_combined.root"%cat, "", "multipdf:roohist_data_mass_%s"%cat, 0])
   
     if args.doABCD:
-      new_rows.append(["bkg_mass", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_bkgshape"%(cat+"cr"), 0, ""])
-      new_rows.append(["data_obs", cat+"cr", "merged", -1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:roohist_data_mass_%s"%(cat+"cr"), 0, ""])
+      #new_rows.append(["bkg_mass", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_bkgshape"%(cat+"cr"), 0])
+      new_rows.append(["dy_falling", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
+      new_rows.append(["data_obs", cat+"cr", "merged", -1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:roohist_data_mass_%s"%(cat+"cr"), 0])
       catnum = int(cat.split("cat")[1].split("cr")[0])
-      new_rows.append(["dy_merged_hgg", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0, ""])
-      new_rows.append(["dy_merged_hgg", cat, "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0, ""])
+      new_rows.append(["dy_merged_hgg", cat+"cr", "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
+      new_rows.append(["dy_merged_hgg", cat, "merged", 1, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:bkg_combined_cat%d_dy"%catnum, 0])
+
+      new_rows.append(["dy_falling", cat, "merged", 0.018, "./Models/background/CMS-HGG_ws_%s_combined.root"%(cat+"cr"), "", "w_control_regions:CMS_hgg_%s_combined_13TeV_dy_falling"%(cat+"cr"), 0])
 
 
   df = pd.concat([df, pd.DataFrame(new_rows, columns=columns)], ignore_index=True)
@@ -385,9 +386,7 @@ def main(args):
       df = pd.concat([df_sr, df_cr])    
       
   df = grabSystematics(df, args)
-  # for col in df.columns:
-  #   print(df[col])
-  print("\n".join(df.columns))
+  print(df)
 
   with open(args.output, "w") as f:
     opt=Options()
@@ -408,19 +407,7 @@ def main(args):
     cr_cats = [cat for cat in df.cat.unique() if cat[-2:]=="cr"]
     td.writePdfIndex(f,df[~df.cat.isin(cr_cats)],opt,"_combined")
 
-    br_hww = 0.219
-    br_wlnu = 0.1086*3
-    br_whad = 1 - br_wlnu
-
-    br_hww_di = br_hww * br_wlnu * br_wlnu
-    br_hww_semi = br_hww * br_wlnu * br_whad * 2
-    br_htt = 0.0621
-
-    f.write("\nggtt_fb_scaler rateParam * ggtt* 0.001\nnuisance edit freeze ggtt_fb_scaler")
-    f.write("\nggww_fb_scaler rateParam * ggww* 0.001\nnuisance edit freeze ggww_fb_scaler")
-    f.write("\nggtt_br_scaler rateParam * ggtt* %f\nnuisance edit freeze ggtt_br_scaler"%br_htt)
-    f.write("\nggwwdi_br_scaler rateParam * ggwwdi* %f\nnuisance edit freeze ggwwdi_br_scaler"%br_hww_di)
-    f.write("\nggwwsemi_br_scaler rateParam * ggwwsemi* %f\nnuisance edit freeze ggwwsemi_br_scaler"%br_hww_semi)
+    f.write("\nsignal_scaler rateParam * ggttres* 0.001\nnuisance edit freeze signal_scaler")
     for proc in df[df.prune==0].proc.unique():
       if "M125" in proc: #only write lines when the resonant background is there
         f.write("\nres_bkg_scaler rateParam * *M125* 1\nnuisance edit freeze res_bkg_scaler")
@@ -449,23 +436,30 @@ def main(args):
 
         if catnum == nCats - 1:
           A_yield = cr_yield
-          f.write("\nABCD_A rateParam %scr dy_merged_hgg %d [0,1000000]"%(cat, cr_yield))
+          f.write("\nABCD_A rateParam %scr dy_merged_hgg %d [0,1000000]"%(cat, cr_yield*0.9))
           to_add_to_group.append("ABCD_A")
           #f.write("\nABCD_A_nom rateParam %scr dy_merged_hgg %d"%(cat, cr_yield))
           #f.write("\nnuisance edit freeze ABCD_A_nom")
           #f.write("\nABCD_A_adj rateParam %scr dy_merged_hgg 1 [0,2]"%cat)
           #to_add_to_group.append("ABCD_A_adj")
           
-          f.write("\nABCD_C rateParam %s dy_merged_hgg 350 [0,1000]"%cat)
-          to_add_to_group.append("ABCD_C")
+          f.write("\nveto_eff extArg 0.0015 [0,0.01]")
+          f.write("\nCMS_nuisance_veto_eff extArg 1.0 [0,5]")
+          f.write("\nCMS_nuisance_veto_eff                          param    0.0    0.0015")
+          f.write("\nABCD_C rateParam %s dy_merged_hgg (@0*(@1+@2)) ABCD_A,veto_eff,CMS_nuisance_veto_eff"%cat)
+          to_add_to_group.append("veto_eff")
           #f.write("\nABCD_C_nom rateParam %s dy_merged_hgg 350"%cat)
           #f.write("\nnuisance edit freeze ABCD_C_nom")
           #f.write("\nABCD_C_adj rateParam %s dy_merged_hgg 1 [0,2]"%cat)
           #to_add_to_group.append("ABCD_C_adj")
+
+          #f.write("\nCMS_nuisance_veto_eff param 1.0 1.0")
+          #f.write("\nveto_eff flatParam ((@0/@1)*@2) ABCD_C,ABCD_A,CMS_nuisance_veto_eff")
         else:
-          f.write("\nABCD_B%d rateParam %scr dy_merged_hgg %d [0,10000]"%(catnum, cat, cr_yield))
+          f.write("\nABCD_B%d rateParam %scr dy_merged_hgg %d [0,10000]"%(catnum, cat, cr_yield*0.9))
           to_add_to_group.append("ABCD_B%d"%catnum)
-          f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*(@1/@2)) ABCD_C,ABCD_B%d,ABCD_A"%(catnum, cat, catnum))
+          #f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*(@1/@2)) ABCD_C,ABCD_B%d,ABCD_A"%(catnum, cat, catnum))
+          f.write("\nABCD_D%d rateParam %s dy_merged_hgg (@0*@1) ABCD_B%d,veto_eff"%(catnum, cat, catnum))
 
           #f.write("\nABCD_B%d_nom rateParam %scr dy_merged_hgg %d"%(catnum, cat, cr_yield))
           #f.write("\nnuisance edit freeze ABCD_B%d_nom"%catnum)
@@ -473,8 +467,11 @@ def main(args):
           #to_add_to_group.append("ABCD_B%d_adj"%catnum)
           #f.write("\nABCD_D%d rateParam %s dy_merged_hgg ((@0*@1)*((@2*@3)/(@4*@5))) ABCD_C_nom,ABCD_C_adj,ABCD_B%d_nom,ABCD_B%d_adj,ABCD_A_nom,ABCD_A_adj"%(catnum, cat, catnum, catnum))
         f.write("\ndy_bkg_scaler rateParam %s dy_merged_hgg 1"%cat)
+        f.write("\ndy_falling_norm_%s rateParam %s* dy_falling %d [0,%d] "%(cat, cat, cr_yield*0.1, cr_yield*0.5))
+        f.write("\ndy_falling_scaler rateParam %s dy_falling 1 [0,2]"%cat)
 
       f.write("\nnuisance edit freeze dy_bkg_scaler")
+      #f.write("\nnuisance edit freeze dy_falling_scaler")
       f.write("\nABCD group = "+" ".join(to_add_to_group))
 
       #f.write("\nABCD_veto_eff rateParam !(*cat) dy_merged_hgg 1 0,1")

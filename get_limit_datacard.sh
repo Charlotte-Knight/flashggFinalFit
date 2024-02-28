@@ -27,20 +27,9 @@ get_last_cat() {
 }
 
 pushd Datacard
-  #python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}_all_cats.txt --MH $mh --MX $mx --MY $my --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --prune --do-res-bkg
-  #combineCards.py --xc=$(get_last_cat Datacard_ggtt_resonant_${m}_all_cats.txt) Datacard_ggtt_resonant_${m}_all_cats.txt > Datacard_ggtt_resonant_${m}.txt
-
-  #python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --prune --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --do-res-bkg
-  #python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --do-res-bkg
-
   if [[ -n $dy_bkg_model ]]; then 
     python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --prune --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --do-res-bkg --doABCD
-    #python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --prune --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --doABCD
   else
     python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --prune --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json --do-res-bkg
-    #python makeDatacardGGTT_new.py -o Datacard_ggtt_resonant_${m}.txt --MH $mh --MX $mx --MY $my --prune --sig-syst ${sig_model}/systematics.json --res-bkg-syst ${res_bkg_model}/systematics.json
   fi
-  # sed -i 's/nuisance edit freeze dy_bkg_scaler//g' Datacard_ggtt_resonant_${m}.txt
-  # echo "" >> Datacard_ggtt_resonant_${m}.txt
-  # echo "dy_bkg_scaler                                                           param    1.0    1.0" >> Datacard_ggtt_resonant_${m}.txt
 popd
